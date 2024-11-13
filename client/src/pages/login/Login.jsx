@@ -16,7 +16,7 @@ import Footer from "../../components/Footer/footer"; // Footer component
 const Login = () => {
   // Destructuring values from Redux auth state
   const { success, error, user } = useSelector((state) => state.auth);
-  
+
   const dispatch = useDispatch(); // Dispatch hook to trigger actions
   const navigate = useNavigate(); // React Router hook for navigation
 
@@ -27,7 +27,7 @@ const Login = () => {
     rememberMe: false,
     userType: "", // New field to allow user type selection (e.g. admin/student)
   });
-  
+
   const [showPassword, setShowPassword] = useState(false); // Toggle password visibility
 
   // Update form state on input change
@@ -101,7 +101,7 @@ const Login = () => {
       <Container>
         <StyledForm onSubmit={handleSubmit}>
           <StyledDivForm>
-            <Text2>Iniciar sesión</Text2>
+            <Text2 id="login-title">Iniciar sesión</Text2>
             <StyledBox>
               <TextField
                 name="email"
@@ -130,6 +130,7 @@ const Login = () => {
                       <IconButton
                         onClick={handleTogglePasswordVisibility}
                         edge="end"
+                        aria-label="toggle password visibility"
                       >
                         {showPassword ? <VisibilityOff /> : <Visibility />}
                       </IconButton>
@@ -139,19 +140,19 @@ const Login = () => {
               />
             </StyledBox>
 
+
             {/* Select for user type */}
             <StyledBox>
               <FormControl fullWidth required>
                 <InputLabel id="user-type-label">Tipo de Usuario</InputLabel>
                 <Select
                   labelId="user-type-label"
-                  name="userType"
+                  aria-label="userType"
                   value={formData.userType}
                   onChange={handleUserTypeChange}
                 >
-                  <MenuItem value="admin">Administrador</MenuItem>
-                  <MenuItem value="student">Estudiante</MenuItem>
-                  
+                  <MenuItem data-testid="admin-type" value="admin">Administrador</MenuItem>
+                  <MenuItem data-testid="student-type" value="student">Estudiante</MenuItem>
                 </Select>
               </FormControl>
             </StyledBox>
@@ -169,7 +170,7 @@ const Login = () => {
               />
               <StyledLink to="/recover">¿Olvidaste tu contraseña?</StyledLink>
             </StyledBoxLogin>
-            <StyledButton type="submit">Iniciar sesión</StyledButton>
+            <StyledButton type="submit">Ingresar</StyledButton>
           </StyledDivForm>
 
           <StyledFooterForm>

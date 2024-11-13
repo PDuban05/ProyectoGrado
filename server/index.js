@@ -29,6 +29,7 @@ const updateCampaignImageAdmin= require("./routes/admin/updateCampaignImageAdmin
 const deleteCampaignAdmin= require("./routes/admin/deleteCampaignAdmin");
 const resultVotes= require("./routes/votes/resultVotes");
 const verifyVotes= require("./routes/votes/verifyVotes");
+const cursos= require("./utils/course");
 
 
 //add user
@@ -62,6 +63,11 @@ app.use("/", verifyVotes);
 
 //uploads files
 app.use("/", uploadFiles);
+
+
+//get cursos
+
+app.use("/", cursos)
 
 //candidates
 app.use("/", registerCandidate);

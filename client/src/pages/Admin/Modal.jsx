@@ -6,6 +6,8 @@ import {
   Button,
   CardMedia,
   CardActionArea,
+  Chip,
+  Autocomplete,
 } from "@mui/material";
 import styled from "styled-components";
 import { useState, useEffect } from "react";
@@ -26,8 +28,6 @@ import {
   StyledCardAdmin,
 } from "../dashboard/Styledcomponents/StyledMainComponets";
 import { Container, ContainerModal, GridContainer, Section, StyledButtonModal, StyledCardActions, StyledCardMedia, StyledCardModal, StyledDialog, StyledTextField, Title } from "./StyledComponentsAdmin/StyledComponent";
-
-
 
 
 // Function to format date to YYYY-MM-DD
@@ -82,9 +82,6 @@ export default function CampaignModal({
         uploadImage: "",
         status: initialData.status || "Preparación",
       });
-
-      console.log(initialData);
-
       const allCandidates = initialData.candidates || [];
       setCandidates(allCandidates);
 
@@ -97,6 +94,9 @@ export default function CampaignModal({
 
       setApprovedCandidates(approved);
       setUnapprovedCandidates(unapproved);
+
+      // Si estamos editando, seleccionamos "Todas" por defecto
+      setSelectedCourses(initialData.courses ? initialData.courses : ["Todas"]);
     } else {
       setCampaignData({
         campaignId: "",
@@ -113,6 +113,8 @@ export default function CampaignModal({
       setUnapprovedCandidates([]);
     }
   }, [initialData]);
+
+
 
   const handleChange = (e) => {
     setCampaignData({
@@ -191,6 +193,25 @@ export default function CampaignModal({
     return `Finaliza: ${end.toLocaleDateString()}`;
   };
 
+
+
+
+
+
+  const [selectedCourses, setSelectedCourses] = useState([]);
+
+ 
+  const handleCoursesChange = (event, newValue) => {
+    if (newValue.includes("Todas")) {
+      // Si se selecciona "Todas", reemplaza las demás selecciones solo con "Todas"
+      setSelectedCourses(["Todas"]);
+    } else {
+      // Si se seleccionan carreras individuales, excluye "Todas"
+      setSelectedCourses(newValue.filter((course) => course !== "Todas"));
+    }
+  };
+
+
   return (
     <StyledDialog open={open} onClose={onClose}>
       <form onSubmit={handleSubmit}>
@@ -242,6 +263,33 @@ export default function CampaignModal({
             required
             InputLabelProps={{ shrink: true }}
           />
+
+
+<Autocomplete
+          multiple
+          id="select-courses"
+          options={courses}
+          value={selectedCourses}
+          onChange={handleCoursesChange}
+          renderTags={(value, getTagProps) =>
+            value.map((option, index) => (
+              <Chip
+                key={index}
+                label={option}
+                {...getTagProps({ index })}
+                color="primary"
+              />
+            ))
+          }
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              variant="outlined"
+              label="Carreras Participantes"
+              placeholder="Selecciona las carreras"
+            />
+          )}
+        />
 
           {/* Image Upload Section */}
           <Section>
@@ -392,3 +440,24 @@ export default function CampaignModal({
     </StyledDialog>
   );
 }
+
+ // Ejemplo de opciones de carreras universitarias
+ const courses = [
+  "Todas",
+  "Ingeniería de Sistemas", "Derecho", "Medicina", "Arquitectura", "Psicología", "Administración de Empresas",
+  "Ingeniería Industrial", "Contabilidad", "Economía", "Marketing", "Ciencias Políticas", "Biotecnología",
+  "Química", "Física", "Matemáticas", "Historia", "Geografía",
+   "Ingeniería Electrónica", "Ingeniería Mecánica",
+  "Ingeniería Eléctrica", "Ingeniería Civil", "Ingeniería Química", "Relaciones Internacionales",
+  "Trabajo Social", "Periodismo", "Diseño Gráfico", 
+  "Negocios Internacionales",  "Agronomía", "Veterinaria", "Enfermería", "Fisioterapia",
+   "Geología",
+  "Filosofía", "Teología", "Odontología", "Ciencias Ambientales", "Criminología", "Logística",
+  "Ingeniería en Telecomunicaciones", "Bioquímica", "Genética", "Ciencias del Deporte", "Ingeniería en Sistemas de Información",
+  "Ingeniería en Software", "Ciencias Forenses", "Estadística",  
+  // Puedes agregar más si es necesario
+   // Opción especial
+];
+
+
+

@@ -1,4 +1,4 @@
-import { Select, Toolbar } from "@mui/material";
+import { Button, Menu, Select, Toolbar } from "@mui/material";
 import styled from "styled-components";
 
 export const StyledAppBar = styled.div`
@@ -145,6 +145,39 @@ export const StyledSelect = styled(Select)`
 
     &:active .MuiOutlinedInput-notchedOutline {
       border-color: transparent;
+    }
+  }
+`;
+
+// Styles for the navigation links container, hidden on smaller screens
+export const ContainerLink = styled.nav`
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 50px;
+  @media screen and (max-width: 768px) {
+    display: none;
+  }
+`;
+
+// Custom button for the Avatar, ensuring it has no shadow and rounded shape
+export const AvatarButton = styled(Button)`
+  && {
+    padding: 0;
+    border-radius: 50%;
+    box-shadow: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+`;
+
+// Styling for the menu, adding custom margins and border radius
+export const StyledMenu = styled(Menu)`
+  && {
+    margin-top: 0px;
+    .MuiPaper-root {
+      border-radius: 12px;
     }
   }
 `;

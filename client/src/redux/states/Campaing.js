@@ -43,7 +43,7 @@ export const fetchCampaigns = () => async (dispatch) => {
   dispatch(fetchCampaignsStart()); // Dispatch action to indicate fetching has started
   try {
     // Making a POST request to fetch campaigns
-    const response = await axios.post("http://localhost:3001/fetchCampaigns");
+    const response = await axios.get("http://localhost:3001/fetchCampaigns");
 
     if (response.data.success) {
       // If the fetch is successful, dispatch success action with the fetched results

@@ -51,15 +51,21 @@ const FormProfile = () => {
 
   // Fetch user information on component mount
   useEffect(() => {
+
+    console.log(user)
     axios
-      .post("http://localhost:3001/fetchUserInf", { id: user.id })
+      .post("http://localhost:3001/fetchUserInf", { user_id : user.id })
       .then((response) => {
+
+        console.log(response)
         if (response.data.success) {
-          const userData = response.data.results[0];
+          const userData = response.data.user[0]
           // Format date of birth to 'YYYY-MM-DD'
           const formattedDate = userData.date_of_birth
             ? new Date(userData.date_of_birth).toISOString().split("T")[0]
             : "";
+            console.log(userData.person_id)
+            
 
           // Update formData with user information
           setFormData({
@@ -398,3 +404,5 @@ const FormProfile = () => {
 };
 
 export default FormProfile;
+
+

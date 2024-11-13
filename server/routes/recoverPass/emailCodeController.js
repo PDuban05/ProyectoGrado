@@ -7,56 +7,101 @@ const router = express.Router(); // Create a new router instance
 
 // Define a POST endpoint for sending a verification code
 router.post("/send-verification-code", (req, res) => {
-    const { email } = req.body; // Destructure the email from the request body
+  const { email } = req.body; // Destructure the email from the request body
+  console.log(email);
   
-    if (!email) {
-      return res.send({ success: false, message: "Email es requerido" }); // Return an error if no email is provided
+  if (!email) {
+    return res.send({ success: false, message: "Email es requerido" }); // Return an error if no email is provided
+  }
+
+  // SQL query to find the user by email
+  db.query("SELECT * FROM users WHERE email = ?", [email], (err, results) => {
+    if (err) {
+      return res.send({ success: false, message: "Error en el servidor" }); // Return an error if there is a server error
     }
-  
-    // SQL query to find the user by email
-    db.query("SELECT * FROM users WHERE email = ?", [email], (err, results) => {
-      if (err) {
-        return res.send({ success: false, message: "Error en el servidor" }); // Return an error if there is a server error
-      }
-  
-      if (results.length === 0) {
-        // If the user is not found
-        return res.send({
-          success: false,
-          message: "Correo electrónico no registrado", // Return an error if the email is not registered
-        });
-      }
-    });
-  
-    // If the user exists, generate and send the verification code
-    const verificationCode = generateVerificationCode(); // Generate a verification code
-  
+
+    if (results.length === 0) {
+      // If the user is not found
+      return res.send({
+        success: false,
+        message: "Correo electrónico no registrado", // Return an error if the email is not registered
+      });
+    }
+
+    const user = results[0]; // Get the user from the query result
+    const userId = user.user_id; // Get the user_id from the results
+
+    // Generate a verification code
+    const verificationCode = generateVerificationCode();
+    console.log(user, userId);
+
+    // Check if the verification code already exists for this user
     db.query(
-      "UPDATE users SET verification_code = ? WHERE email = ?", // Update the user's verification code in the database
-      [verificationCode, email],
-      (err, updateResult) => {
+      "SELECT * FROM verification WHERE user_id = ?", // Query to find if the user already has a verification record
+      [userId],
+      (err, verificationResults) => {
         if (err) {
           return res.send({
             success: false,
-            message: "Error al actualizar el código de verificación", // Return an error if there is an issue updating the verification code
+            message: "Error al verificar el código de verificación", // Error while checking if the verification exists
           });
+        }
+
+        if (verificationResults.length > 0) {
+          // If a verification record exists for the user, update the verification code
+          db.query(
+            "UPDATE verification SET verification_code = ? WHERE user_id = ?", // Update the verification code
+            [verificationCode, userId],
+            (err, updateResult) => {
+              if (err) {
+                return res.send({
+                  success: false,
+                  message: "Error al actualizar el código de verificación", // Error while updating
+                });
+              }
+
+              // Send the verification email after updating
+              sendVerificationEmail(email, verificationCode, res);
+            }
+          );
+        } else {
+          // If no verification record exists for the user, insert a new record
+          db.query(
+            "INSERT INTO verification (user_id, verification_code) VALUES (?, ?)", // Insert new verification code
+            [userId, verificationCode],
+            (err, insertResult) => {
+              if (err) {
+                return res.send({
+                  success: false,
+                  message: "Error al insertar el código de verificación en la base de datos", // Error while inserting
+                });
+              }
+
+              // Send the verification email after inserting
+              sendVerificationEmail(email, verificationCode, res);
+            }
+          );
         }
       }
     );
-  
-    // Create a transporter for sending the verification email
-    const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 465,
-      secure: true, // Use secure connection
-      auth: {
-        user: "pedroduban15@gmail.com", // Sender's email
-        pass: "noui extw xilf voaz", // Sender's email password
-      },
-    });
-  
-    // HTML content for the verification email
-    const verificationEmailHtml = `
+  });
+});
+
+// Function to send the verification email
+const sendVerificationEmail = (email, verificationCode, res) => {
+  // Create a transporter for sending the verification email
+  const transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true, // Use secure connection
+    auth: {
+      user: "pedroduban15@gmail.com", // Sender's email
+      pass: "noui extw xilf voaz", // Sender's email password
+    },
+  });
+
+  // HTML content for the verification email
+  const verificationEmailHtml = `
   <!DOCTYPE html>
   <html>
   <head>
@@ -139,31 +184,31 @@ router.post("/send-verification-code", (req, res) => {
   </body>
   </html>
   `;
-  
-    // Send the verification email
-    transporter.sendMail(
-      {
-        from: '"Soporte 👻" <dominicode.xyz@gmail.com>', // Sender
-        to: email, // Recipient (the email provided by the user)
-        subject: "Código de verificación", // Subject of the email
-        text: `Tu código de verificación es: ${verificationCode}`, // Plain text of the email
-        html: verificationEmailHtml, // HTML body of the email
-      },
-      (error, info) => {
-        if (error) {
-          return res.status(500).send({
-            success: false,
-            message: "Error enviando el correo electrónico", // Return an error if there is an issue sending the email
-          });
-        }
-  
-        return res.send({
-          success: true,
-          message: "Código de verificación enviado", // Return success message after sending the email
+
+  // Send the verification email
+  transporter.sendMail(
+    {
+      from: '"Soporte 👻" <dominicode.xyz@gmail.com>', // Sender
+      to: email, // Recipient (the email provided by the user)
+      subject: "Código de verificación", // Subject of the email
+      text: `Tu código de verificación es: ${verificationCode}`, // Plain text of the email
+      html: verificationEmailHtml, // HTML body of the email
+    },
+    (error, info) => {
+      if (error) {
+        return res.status(500).send({
+          success: false,
+          message: "Error enviando el correo electrónico", // Return an error if there is an issue sending the email
         });
       }
-    );
-  });
+
+      return res.send({
+        success: true,
+        message: "Código de verificación enviado", // Return success message after sending the email
+      });
+    }
+  );
+};
 
 // Export the router
-module.exports = router;
+module.exports = router;  

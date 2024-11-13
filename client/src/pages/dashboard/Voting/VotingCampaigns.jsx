@@ -64,6 +64,15 @@ const VotingCampaign = ({ campaignData }) => {
     }
   }, [campaignData, user]);
 
+  // Agregar un candidato de voto en blanco
+  const blankVote = {
+    candidate_id: "blank_vote",
+    first_name: "Voto",
+    last_name: "En Blanco",
+    profile_picture_url: null,
+    campaign_slogan: "Elija votar en blanco",
+  };
+
   const handleVoteClick = (candidate, isAuth) => {
     const now = new Date();
     const { start_date: startDate, end_date: endDate } = campaignData.campaign;
@@ -71,8 +80,6 @@ const VotingCampaign = ({ campaignData }) => {
     const start = new Date(startDate);
     const end = new Date(endDate);
 
- 
-    
     if (now > end) {
       Swal.fire({
         icon: 'warning',
@@ -84,9 +91,7 @@ const VotingCampaign = ({ campaignData }) => {
         timerProgressBar: true,
       });
 
-      
     } else if (now < start) {
-
       Swal.fire({
         icon: 'warning',
         title: 'La campaña aun no ha comenzado',
@@ -97,9 +102,7 @@ const VotingCampaign = ({ campaignData }) => {
         timerProgressBar: true,
       });
 
-
     } else if (hasVoted) {
-
       Swal.fire({
         icon: 'warning',
         title: 'Ya has votado en esta campaña',
@@ -203,6 +206,8 @@ const VotingCampaign = ({ campaignData }) => {
                   </CardBody>
                 </CandidateCard>
               ))}
+              
+              
             </CardGrid>
           )}
         </CardContainer>
@@ -223,7 +228,7 @@ const VotingCampaign = ({ campaignData }) => {
         </CardContainer>
       </Card>
 
-      {/* Modal */}
+      {/* Modal para votar */}
       <Modal
         open={showModal}
         onClose={handleCloseModal}
@@ -239,11 +244,12 @@ const VotingCampaign = ({ campaignData }) => {
         />
       </Modal>
 
+      {/* Modal para información del candidato */}
       <Modal
         open={openModal}
         onClose={handleCloseCandidateModal}
-        aria-labelledby="voting-modal-title"
-        aria-describedby="voting-modal-description"
+        aria-labelledby="candidate-modal-title"
+        aria-describedby="candidate-modal-description"
       >
         <CandidateModal
           candidate={selectedCandidate}

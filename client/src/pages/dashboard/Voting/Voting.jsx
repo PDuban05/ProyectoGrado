@@ -36,7 +36,7 @@ const CampaignOverview = () => {
             setCampaignData(response.data);
             setLoading(false);
 
-            console.log(response)
+          
           } else {
             console.error(response.data.message);
           }

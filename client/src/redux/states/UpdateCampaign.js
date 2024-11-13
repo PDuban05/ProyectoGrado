@@ -44,11 +44,11 @@ export const { UpdateStart, UpdateSuccess, UpdateFailure, resetState } = UpdateC
 // Thunk function to handle the campaign update process
 export const UpdateCampaign = (DataCampaign) => async (dispatch) => {
   dispatch(UpdateStart()); // Dispatching action to indicate the process has started
-
+      console.log(DataCampaign)
   try {
     // Making a POST request to update the campaign data
     const response = await axios.post("http://localhost:3001/updateCampaign", DataCampaign);
-
+      console.log(response)
     // Checking if the response indicates success
     if (response.data.success) {
       dispatch(UpdateSuccess()); // Dispatch success action if the update is successful
@@ -75,6 +75,8 @@ export const UpdateCandidates = (approvedCandidates, unapprovedCandidates) => as
     // Checking if the response indicates success
     if (response.data.success) {
       dispatch(UpdateSuccess()); // Dispatch success action if the candidate update is successful
+      console.log("yei")
+
     } else {
       dispatch(UpdateFailure(response.data.message)); // Dispatch failure action with the error message
     }

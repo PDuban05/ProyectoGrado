@@ -6,47 +6,22 @@ import { StyledButton2 } from "../styledComponets/Bottons/botton";
 import { StyledImg } from "../styledComponets/Icons/Icons";
 import { StyledLink, TextIco } from "../styledComponets/Text/Text";
 import {
+  AvatarButton,
+  ContainerLink,
   ContainerLogo,
   ContainerMenu,
   Content,
   StyledAppBar,
+  StyledMenu,
   StyledToolbar
 } from "./styledComponets/Container";
 import { useDispatch, useSelector } from "react-redux";
 import { initializeToken, logout } from "../../redux/states/AuthUser";
 
-// Styles for the navigation links container, hidden on smaller screens
-const ContainerLink = styled.nav`
-  height: 100%;
-  display: flex;
-  align-items: center;
-  gap: 50px;
-  @media screen and (max-width: 768px) {
-    display: none;
-  }
-`;
 
-// Custom button for the Avatar, ensuring it has no shadow and rounded shape
-const AvatarButton = styled(Button)`
-  && {
-    padding: 0;
-    border-radius: 50%;
-    box-shadow: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-`;
 
-// Styling for the menu, adding custom margins and border radius
-const StyledMenu = styled(Menu)`
-  && {
-    margin-top: 0px;
-    .MuiPaper-root {
-      border-radius: 12px;
-    }
-  }
-`;
+
+
 
 const NavBar = () => {
   // State to manage the visibility of the Navbar on scroll

@@ -64,6 +64,8 @@ export const { loginStart, loginSuccess, loginFailure, setToken, verifyUser, log
 
 // Async thunk for handling user login
 export const loginAuth = (userData) => async (dispatch) => {
+
+  
   dispatch(loginStart()); // Start login process
   try {
     // Making a POST request to authenticate the user
@@ -71,6 +73,8 @@ export const loginAuth = (userData) => async (dispatch) => {
 
     if (response.data.success) {
       const token = response.data.user.token; // Extract token from response
+
+      
 
       // Check if rememberMe option is selected and store token accordingly
       if (userData.rememberMe) {

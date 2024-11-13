@@ -45,7 +45,7 @@ export const { CreateStart, CreateSuccess, CreateFailure, resetState } =
 // Async thunk for creating a campaign
 export const CreateCampaign = (DataCampaign) => async (dispatch) => {
   dispatch(CreateStart()); // Dispatch action to indicate campaign creation has started
-  console.log(DataCampaign); // Log the campaign data for debugging purposes
+  console.log(DataCampaign);
 
   try {
     // Create campaign by making a POST request to the server

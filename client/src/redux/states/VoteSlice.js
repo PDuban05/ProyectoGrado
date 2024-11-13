@@ -42,7 +42,6 @@ export const { VoteStart, VoteSuccess, VoteFailure, ResetState } = voteSlice.act
 export const VoteAuth = (vote) => async (dispatch) => {
   const { selectedCandidate, user } = vote; // Destructuring the vote object to get selected candidate and user
 
-  console.log(selectedCandidate, user); // Logging the selected candidate and user for debugging purposes
 
   // Start the voting process by dispatching VoteStart action
   dispatch(VoteStart()); 

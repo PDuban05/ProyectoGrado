@@ -3,6 +3,9 @@ const db = require("../../config/db"); // Import the database configuration
 
 // Function to send a digital signature via email
 const sendSignatureEmail = (email, firmaDigital, campaignName, voteDate, voteTime) => {
+
+  // console.log(email,firmaDigital)
+  
   return new Promise((resolve, reject) => {
     if (!email || !firmaDigital) {
       return reject({ success: false, message: "Email y firma digital son requeridos" }); // Check if email and digital signature are provided
@@ -10,17 +13,17 @@ const sendSignatureEmail = (email, firmaDigital, campaignName, voteDate, voteTim
 
     // SQL query to find the user by email
     db.query("SELECT * FROM users WHERE email = ?", [email], (err, results) => {
-      if (err) {
-        return reject({ success: false, message: "Error en el servidor" }); // Handle server errors
-      }
+      // if (err) {
+      //   return reject({ success: false, message: "Error en el servidor" }); // Handle server errors
+      // }
 
-      if (results.length === 0) {
-        // If the user is not found
-        return reject({
-          success: false,
-          message: "Correo electrónico no registrado", // Return error if email is not registered
-        });
-      }
+      // if (results.length === 0) {
+      //   // If the user is not found
+      //   return reject({
+      //     success: false,
+      //     message: "Correo electrónico no registrado", // Return error if email is not registered
+      //   });
+      // }
 
       // Create a transporter for sending the email
       const transporter = nodemailer.createTransport({

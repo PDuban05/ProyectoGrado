@@ -5,13 +5,14 @@ const router = express.Router(); // Create a new router object
 
 // Define a POST route to fetch active campaigns
 router.post("/fetchActiveCampaigns", (req, res) => {
-    // Get the current date in a format compatible with SQL
-    const currentDate = new Date().toISOString().split("T")[0]; // Format 'YYYY-MM-DD'
+    // Get the current date and time in the format 'YYYY-MM-DD HH:MM:SS'
+    const currentDate = new Date();
+    const formattedDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')} ${String(currentDate.getHours()).padStart(2, '0')}:${String(currentDate.getMinutes()).padStart(2, '0')}:${String(currentDate.getSeconds()).padStart(2, '0')}`;
   
     // Query to get only the campaigns that are currently active
     db.query(
       "SELECT * FROM campaigns WHERE start_date <= ? AND end_date >= ?",
-      [currentDate, currentDate],
+      [formattedDate, formattedDate],
       (err, results) => {
         if (err) {
           // If there's an error, send a response indicating a server error

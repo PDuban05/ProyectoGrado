@@ -3,7 +3,7 @@ import { createSlice } from '@reduxjs/toolkit'; // Importing createSlice from Re
 import axios from 'axios'; // Importing axios for making HTTP requests
 
 // Defining the initial state of the user slice
-const initialState = {
+export const initialState = {
   success: false, // Indicates whether the user addition was successful
   error: null, // Holds any error messages related to the addition process
   loading: false, // Indicates if a user addition request is currently in progress
@@ -46,19 +46,21 @@ export const { addUserStart, addUserSuccess, addUserFailure, resetUserState } = 
 export default userSlice.reducer;
 
 // Thunk function to handle the user addition process
-export const addUser = (userData) => async (dispatch) => {
+export const userAdd = (formData) => async (dispatch) => {
+  console.log('Dispatching user data:', formData); // Añadir log para ver qué datos estás enviando
   try {
-    dispatch(addUserStart()); // Dispatching the action to indicate the process has started
-    // Making a POST request to add a new user
-    const response = await axios.post("http://localhost:3001/addUser", userData);
-    // Checking if the response indicates success
+    dispatch(addUserStart()); // Dispatch para indicar que la solicitud ha comenzado
+    const response = await axios.post("http://localhost:3001/addUser", formData);
+    console.log(response.data); // Verifica la respuesta de la API
     if (response.data.success) {
-      dispatch(addUserSuccess()); // Dispatch success action if addition is successful
+      dispatch(addUserSuccess()); // Si la respuesta es exitosa, actualiza el estado
     } else {
-      dispatch(addUserFailure(response.data.message)); // Dispatch failure action with the error message
+      dispatch(addUserFailure(response.data.message)); // Si hay un error, actualiza el estado con el mensaje
     }
   } catch (error) {
-    // Catching any errors that occur during the request
-    dispatch(addUserFailure("Error al conectar con el servidor")); // Dispatch failure action with a server error message
+    console.error('Error during user registration:', error); // Mejor manejo de errores
+    dispatch(addUserFailure("Error al conectar con el servidor"));
   }
 };
+
+

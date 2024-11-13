@@ -43,7 +43,7 @@ export const { SendEmailStart, EmailSuccess, EmailFailure, resetState } = Verify
 // Thunk function to handle sending the verification code
 export const SendCode = (userData) => async (dispatch) => {
   dispatch(SendEmailStart()); // Dispatching action to indicate the email verification process has started
-
+    console.log(userData)
   try {
     // Making a POST request to send the verification code to the specified email
     const response = await axios.post(

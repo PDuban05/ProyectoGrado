@@ -1,122 +1,165 @@
-import { Visibility, VisibilityOff } from "@mui/icons-material"; // Importing icons for visibility toggle
-import { IconButton, InputAdornment, TextField } from "@mui/material"; // Importing Material UI components
-import { useEffect, useState } from "react"; // Importing React hooks
-import { useDispatch, useSelector } from "react-redux"; // Importing hooks for Redux
-import { useNavigate } from "react-router-dom"; // Importing navigation hook
-import NavBar from "../../components/NavBar/NavBar"; // Importing the navigation bar component
-import { StyledButton } from "../../components/styledComponets/Bottons/botton"; // Importing a styled button
-import { Container, StyledBox, StyledForm } from "../../components/styledComponets/Containers/Containers"; // Importing styled container components
-import { StyledLink, Text2, Text4 } from "../../components/styledComponets/Text/Text"; // Importing styled text components
-import ThemeProvider from "../../components/styledComponets/Theme/ThemeProvider"; // Importing theme provider
-import { addUser } from "../../redux/states/RegisterSlice"; // Importing action to register a user
-import { StyledDivForm, StyledFooterForm } from "./StyledComponets/containerForm"; // Importing styled components for form
+
+
+
+
+import { Visibility, VisibilityOff } from "@mui/icons-material";
+import { Autocomplete, IconButton, InputAdornment, TextField } from "@mui/material";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
+import NavBar from "../../components/NavBar/NavBar";
+import { StyledButton } from "../../components/styledComponets/Bottons/botton";
+import { Container, StyledBox, StyledForm } from "../../components/styledComponets/Containers/Containers";
+import { StyledLink, Text2, Text4 } from "../../components/styledComponets/Text/Text";
+import ThemeProvider from "../../components/styledComponets/Theme/ThemeProvider";
+import {  addUserFailure, userAdd } from "../../redux/states/RegisterSlice";
+import { StyledDivForm, StyledFooterForm } from "./StyledComponets/containerForm";
+import axios from "axios";
 
 const Register = () => {
-  const dispatch = useDispatch(); // Hook to dispatch actions
-  const { success, error } = useSelector((state) => state.user); // Selecting success and error states from Redux store
-  const navigate = useNavigate(); // Hook to programmatically navigate
-  const [showPassword, setShowPassword] = useState(false); // State for password visibility
-  const [formData, setFormData] = useState({ // State to store form data
+  const dispatch = useDispatch();
+  const { success, error } = useSelector((state) => state.user);
+  const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
+  const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     email: "",
     dni: "",
     password: "",
+    course: null, // Cambia el tipo a null para almacenar el objeto del curso
   });
-
-  const [errors, setErrors] = useState({ // State to store validation errors
+  const [errors, setErrors] = useState({
     firstName: "",
     lastName: "",
     email: "",
     dni: "",
     password: "",
+    course: "",
   });
+  const [Errorserver, setErrorserver] = useState("");
+  const [courses, setCourses] = useState([]);
 
-  const [Errorserver, setErrorserver] = useState(""); // State to store server error messages
+  useEffect(() => {
+    axios.get('http://localhost:3001/course')
+      .then(response => {
+        if (response.data.success) {
+          setCourses(response.data.courses);
+        } else {
+          console.error('Error fetching courses:', response.data.message);
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching courses:', error);
+      });
+  }, []);
 
-  // Function to validate individual fields based on their name and value
   const validateField = (name, value) => {
     let error = "";
-
-    // Switch case to validate different fields
     switch (name) {
       case "firstName":
-        if (!/^[a-zA-Z]+$/.test(value)) {
-          error = "El nombre solo debe contener letras"; // Error message for first name
-        }
+        if (!/^[a-zA-Z\s]+$/.test(value)) error = "El nombre solo debe contener letras y espacios";
         break;
       case "lastName":
-        if (!/^[a-zA-Z]+$/.test(value)) {
-          error = "El apellido solo debe contener letras"; // Error message for last name
-        }
+        if (!/^[a-zA-Z\s]+$/.test(value)) error = "El apellido solo debe contener letras y espacios";
         break;
       case "dni":
-        if (!/^\d+$/.test(value)) {
-          error = "La cédula solo debe contener números"; // Error message for DNI
-        }
+        if (!/^\d+$/.test(value)) error = "La cédula solo debe contener números";
         break;
       case "email":
-        if (!/\S+@\S+\.\S+/.test(value)) {
-          error = "El email no es válido"; // Error message for email
-        }
+        if (!/\S+@\S+\.\S+/.test(value)) error = "El email no es válido";
         break;
       case "password":
         if (!value.match(/^(?=.*[0-9])(?=.*[a-zA-Z])(?=.*[!@#$%^&*])/)) {
-          error = "Debe contener al menos un número, una letra y un símbolo"; // Error message for password complexity
+          error = "Debe contener al menos un número, una letra y un símbolo";
         }
-        if (value.length < 6) {
-          error = "Debe tener al menos 6 caracteres"; // Error message for password length
-        }
+        if (value.length < 6) error = "Debe tener al menos 6 caracteres";
+        break;
+      case "course":
+        if (!value) error = "Selecciona una carrera";
         break;
       default:
         break;
     }
-
-    setErrors((prevErrors) => ({ ...prevErrors, [name]: error })); // Update errors state
+  
+    setErrors((prevErrors) => ({
+      ...prevErrors,
+      [name]: error
+    }));
   };
+  
 
-  // Function to toggle password visibility
-  const handleTogglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
+  const handleTogglePasswordVisibility = () => setShowPassword(!showPassword);
 
-  // Function to handle input changes and validate fields in real time
   const handleChange = (e) => {
-    const { name, value } = e.target; // Destructure name and value from event target
+    const { name, value } = e.target;
+  
+    setFormData((prevFormData) => {
+      const newFormData = { ...prevFormData, [name]: value };
+      validateField(name, value); // Llama a la validación cada vez que cambias un campo
+      return newFormData;
+    });
+  };
+  
+
+  const handleCourseChange = (event, value) => {
     setFormData((prevFormData) => ({
       ...prevFormData,
-      [name]: value, // Update corresponding field in formData
+      course: value ? value.id : "", // Guarda solo el id del curso seleccionado
     }));
-    validateField(name, value); // Validate field in real time
+  
+    validateField("course", value); // Llama a la validación al cambiar el curso
   };
+  
 
-  // Function to handle form submission
   const handleSubmit = (e) => {
-    e.preventDefault(); // Prevent default form submission
-
-    // Final validation check before dispatching the action
-    const isValid = Object.values(errors).every((error) => error === "") && 
-                    Object.values(formData).every((value) => value !== "");
-
+    e.preventDefault();
+  
+    // Verifica si los errores están vacíos y si los valores del formulario no están vacíos
+    const isValid = Object.values(errors).every((error) => error === "") &&
+                    Object.values(formData).every((value) => value !== "" && value !== null);
+  
+  
+  
     if (isValid) {
-      dispatch(addUser(formData)); // Dispatch action to add user if valid
+     console.log(formData)
+      dispatch(userAdd(formData));
+
     } else {
-      alert("Por favor, corrija los errores en el formulario antes de enviarlo."); // Alert user to correct errors
+      alert("Por favor, corrija los errores en el formulario antes de enviarlo.");
     }
   };
+  
 
-  // Effect to navigate on successful registration or handle errors
   useEffect(() => {
     if (success) {
-      navigate("/login"); // Navigate to login page on success
-    }
+      const Toast = Swal.mixin({
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 1000,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+          toast.onmouseenter = Swal.stopTimer;
+          toast.onmouseleave = Swal.resumeTimer;
+        }
+      });
 
-    if (error) {
-      setErrorserver(error); // Set server error message
-    } else {
-      setErrorserver(""); // Reset error message if no error
+      Toast.fire({
+        icon: "success",
+        title: "Te has registrado con éxito"
+      }).then(() => {
+        dispatch(addUserFailure());
+        navigate("/login");
+      });
     }
-  }, [success, error, navigate]); // Dependencies for useEffect
+    if (error) {
+      setErrorserver(error);
+    } else {
+      setErrorserver("");
+    }
+  }, [success, error, navigate]);
 
   return (
     <ThemeProvider>
@@ -161,6 +204,24 @@ const Register = () => {
                 helperText={errors.dni}
               />
             </StyledBox>
+
+            <StyledBox>
+              <Autocomplete
+                options={courses}
+                getOptionLabel={(option) => option.name} // Muestra el nombre del curso en el selector
+                value={courses.find((course) => course.id === formData.course) || null} // Selecciona el curso por id
+                onChange={handleCourseChange}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Selecciona tu carrera"
+                    required
+                    error={!!errors.course}
+                    helperText={errors.course}
+                  />
+                )}
+              />
+            </StyledBox>
             <StyledBox>
               <TextField
                 name="email"
@@ -174,7 +235,7 @@ const Register = () => {
                 helperText={errors.email || Errorserver}
               />
             </StyledBox>
-
+          
             <StyledBox>
               <TextField
                 name="password"
@@ -184,15 +245,12 @@ const Register = () => {
                 type={showPassword ? "text" : "password"}
                 fullWidth
                 required
-                error={!!errors.password }
-                helperText={errors.password }
+                error={!!errors.password}
+                helperText={errors.password}
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
-                      <IconButton
-                        onClick={handleTogglePasswordVisibility}
-                        edge="end"
-                      >
+                      <IconButton onClick={handleTogglePasswordVisibility} edge="end">
                         {showPassword ? <VisibilityOff /> : <Visibility />}
                       </IconButton>
                     </InputAdornment>
@@ -200,10 +258,8 @@ const Register = () => {
                 }}
               />
             </StyledBox>
-
             <StyledButton type="submit">Registrar</StyledButton>
           </StyledDivForm>
-
           <StyledFooterForm>
             <Text4>¿Ya tienes una cuenta?</Text4>
             <StyledLink to="/login">Iniciar sesión</StyledLink>
