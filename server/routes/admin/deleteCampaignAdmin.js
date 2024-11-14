@@ -39,66 +39,102 @@ router.post('/deleteCampaign', (req, res) => {
             });
           });
         }
-  
-        // Query to delete candidates for the campaign
-        const deleteCandidatesQuery = `
-          DELETE FROM candidates
+        
+        // Query to delete from encrypted_votes for the campaign
+        const deleteEncryptedVotesQuery = `
+          DELETE FROM encrypted_votes
           WHERE campaign_id = ?
         `;
-  
-        db.query(deleteCandidatesQuery, [campaign_Id], (err, results) => {
+        
+        db.query(deleteEncryptedVotesQuery, [campaign_Id], (err, results) => {
           if (err) {
             return db.rollback(() => {
               res.status(500).send({
                 success: false,
-                message: 'Error al eliminar los candidatos.',
+                message: 'Error al eliminar los votos encriptados.',
                 error: err,
               });
             });
           }
-  
-          // Query to delete the campaign itself
-          const deleteCampaignQuery = `
-            DELETE FROM campaigns
+
+          // Query to delete from campaign_keys for the campaign
+          const deleteCampaignKeysQuery = `
+            DELETE FROM campaign_keys
             WHERE campaign_id = ?
           `;
-  
-          db.query(deleteCampaignQuery, [campaign_Id], (err, results) => {
+          
+          db.query(deleteCampaignKeysQuery, [campaign_Id], (err, results) => {
             if (err) {
               return db.rollback(() => {
                 res.status(500).send({
                   success: false,
-                  message: 'Error al eliminar la campaña.',
+                  message: 'Error al eliminar las llaves de la campaña.',
                   error: err,
                 });
               });
             }
-  
-            // If no campaign was found
-            if (results.affectedRows === 0) {
-              return db.rollback(() => {
-                res.status(404).send({
-                  success: false,
-                  message: 'No se encontró ninguna campaña con el ID proporcionado.',
-                });
-              });
-            }
-  
-            // Commit the transaction if all deletions were successful
-            db.commit((err) => {
+
+            // Query to delete candidates for the campaign
+            const deleteCandidatesQuery = `
+              DELETE FROM candidates
+              WHERE campaign_id = ?
+            `;
+
+            db.query(deleteCandidatesQuery, [campaign_Id], (err, results) => {
               if (err) {
                 return db.rollback(() => {
                   res.status(500).send({
                     success: false,
-                    message: 'Error al finalizar la transacción.',
+                    message: 'Error al eliminar los candidatos.',
                     error: err,
                   });
                 });
               }
-  
-              return res.send({
-                success: true,
-                message: 'Campaña, candidatos y votos eliminados correctamente.',
+
+              // Query to delete the campaign itself
+              const deleteCampaignQuery = `
+                DELETE FROM campaigns
+                WHERE campaign_id = ?
+              `;
+
+              db.query(deleteCampaignQuery, [campaign_Id], (err, results) => {
+                if (err) {
+                  return db.rollback(() => {
+                    res.status(500).send({
+                      success: false,
+                      message: 'Error al eliminar la campaña.',
+                      error: err,
+                    });
+                  });
+                }
+
+                // If no campaign was found
+                if (results.affectedRows === 0) {
+                  return db.rollback(() => {
+                    res.status(404).send({
+                      success: false,
+                      message: 'No se encontró ninguna campaña con el ID proporcionado.',
+                    });
+                  });
+                }
+
+                // Commit the transaction if all deletions were successful
+                db.commit((err) => {
+                  if (err) {
+                    return db.rollback(() => {
+                      res.status(500).send({
+                        success: false,
+                        message: 'Error al finalizar la transacción.',
+                        error: err,
+                      });
+                    });
+                  }
+
+                  return res.send({
+                    success: true,
+                    message: 'Campaña, candidatos, votos, votos encriptados y llaves eliminados correctamente.',
+                  });
+                });
               });
             });
           });

@@ -47,13 +47,14 @@ export const UpdateUser = (userData) => async (dispatch) => {
   try {
     // Making a POST request to update user information
     const response = await axios.post("http://localhost:3001/UpdateUserInf", userData);
-
+    
     // Checking if the response indicates success
     if (response.data.success) {
-      console.log(response); // Logging the response for debugging purposes
+      // Logging the response for debugging purposes
       dispatch(UpdateSuccess()); // Dispatch success action if the update is successful
     } else {
       dispatch(UpdateFailure(response.data.message)); // Dispatch failure action with the error message
+     
     }
   } catch (error) {
     // Catching any errors that occur during the request
@@ -63,3 +64,23 @@ export const UpdateUser = (userData) => async (dispatch) => {
 
 // Exporting the reducer to be included in the Redux store
 export default UpdateSlice.reducer;
+
+
+// {
+//   person_id: 54,
+//   national_id_number: '1005564237',
+//   first_name: 'pedro',
+//   last_name: 'moreno',
+//   date_of_birth: '2024-11-11',
+//   gender: 7,
+//   phone_number: '3163219567',
+//   address: 'calle 11a-25-60',
+//   city: 216039,
+//   state: 972,
+//   country: 114,
+//   profile_picture_url: '',
+//   occupation: 1,
+//   education_level: 16,
+//   marital_status: 1,
+//   program: 1
+// }

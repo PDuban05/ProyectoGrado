@@ -59,9 +59,9 @@ export const CandidateGuard = () => {
   }
 
   // If authenticated but not verified, show verification modal
-  if (user.isVerified !== 1) {
-    return <VerificationModal />;
-  }
+  // if (user.isVerified !== 1) {
+  //   return <VerificationModal />;
+  // }
 
   // If authenticated and verified, render the route
   return <Outlet />;

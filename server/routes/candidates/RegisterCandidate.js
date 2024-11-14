@@ -1,89 +1,105 @@
-const express = require("express"); // Import the express library
-const db = require("../../config/db"); // Import the database configuration
-const router = express.Router(); // Create a new router object
+const express = require("express");
+const db = require("../../config/db");
+const router = express.Router();
 
-// Define a POST route for registering a candidate
 router.post("/RegisterCandidate", (req, res) => {
     const {
-      person_id, // Candidate's unique identifier
-      political_party, // Candidate's political party
-      campaign_slogan, // Slogan for the campaign
-      biography, // Candidate's biography
-      social_media_links, // Candidate's social media links
-      campaign_id // Campaign identifier
-    } = req.body; // Extract the request body
+      user_id,  // Se recibe el user_id
+      political_party,
+      campaign_slogan,
+      biography,
+      social_media_links,
+      campaign_id
+    } = req.body;
 
-    // Validate that the person_id is provided
-    if (!person_id) {
+    if (!user_id) {
       return res.send({
         success: false,
-        message: "ID no proporcionado o inválido.", // Message for invalid ID
+        message: "ID de usuario no proporcionado o inválido.",
       });
     }
-  
-    // Query to check if the candidate is already registered for the campaign
-    const checkCandidateQuery = `
-      SELECT * FROM candidates 
-      WHERE person_id = ? AND campaign_id = ?`;
-  
-    // Execute the query to check if the candidate is already registered
-    db.query(checkCandidateQuery, [person_id, campaign_id], (err, results) => {
+
+    // Primero obtenemos el person_id desde la tabla users
+    const getPersonIdQuery = `SELECT person_id FROM users WHERE user_id = ?`;
+
+    db.query(getPersonIdQuery, [user_id], (err, results) => {
       if (err) {
         return res.send({
           success: false,
-          message: "Error en el servidor al verificar el candidato.", // Message for server error
+          message: "Error en el servidor al verificar el usuario.",
           error: err,
         });
       }
-  
-      // If a record is found, the candidate is already registered
-      if (results.length > 0) {
+
+      // Verificamos si encontramos el person_id
+      if (results.length === 0) {
         return res.send({
           success: false,
-          message: "Ya has aplicado para ser candidato para esta campaña.", // Message for already registered
+          message: "No se encontró un person_id asociado al usuario.",
         });
       }
-  
-      // If not registered, proceed with insertion
-      const insertCandidateQuery = `
-        INSERT INTO candidates (
-          person_id, 
-          campaign_id, 
-          political_party, 
-          campaign_slogan, 
-          biography, 
-          social_media_links
-        ) VALUES (?, ?, ?, ?, ?, ?)`;
-  
-      // Serialize social media links to a JSON string
-      const socialMediaLinks = JSON.stringify(social_media_links);
-  
-      const candidateParams = [
-        person_id,
-        campaign_id,
-        political_party,
-        campaign_slogan,
-        biography,
-        socialMediaLinks
-      ]; // Prepare the parameters for the insertion
-  
-      // Execute the query to insert the candidate data into the 'candidates' table
-      db.query(insertCandidateQuery, candidateParams, (err, results) => {
+
+      const person_id = results[0].person_id;
+
+      // Comprobamos si el candidato ya está registrado en la campaña
+      const checkCandidateQuery = `
+        SELECT * FROM candidates 
+        WHERE person_id = ? AND campaign_id = ?`;
+
+      db.query(checkCandidateQuery, [person_id, campaign_id], (err, results) => {
         if (err) {
           return res.send({
             success: false,
-            message: "Error en el servidor al insertar el candidato.", // Message for insertion error
+            message: "Error en el servidor al verificar el candidato.",
             error: err,
           });
         }
-  
-        return res.send({
-          success: true,
-          message: "Candidato insertado correctamente.", // Message for successful insertion
+
+        if (results.length > 0) {
+          return res.send({
+            success: false,
+            message: "Ya has aplicado para ser candidato para esta campaña.",
+          });
+        }
+
+        // Insertamos el nuevo candidato en caso de que no esté registrado
+        const insertCandidateQuery = `
+          INSERT INTO candidates (
+            person_id, 
+            campaign_id, 
+            political_party, 
+            campaign_slogan, 
+            biography, 
+            social_media_links
+          ) VALUES (?, ?, ?, ?, ?, ?)`;
+
+        const socialMediaLinks = JSON.stringify(social_media_links);
+
+        const candidateParams = [
+          person_id,
+          campaign_id,
+          political_party,
+          campaign_slogan,
+          biography,
+          socialMediaLinks
+        ];
+
+        db.query(insertCandidateQuery, candidateParams, (err, results) => {
+          if (err) {
+            return res.send({
+              success: false,
+              message: "Error en el servidor al insertar el candidato.",
+              error: err,
+            });
+          }
+
+          return res.send({
+            success: true,
+            message: "Candidato insertado correctamente.",
+          });
         });
       });
     });
   });
 
-// Export the router for use in other parts of the application
 module.exports = router;

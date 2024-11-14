@@ -49,7 +49,7 @@ export const DeleteCampaign = (CampaignId) => async (dispatch) => {
 
   try {
     // Sending a POST request to delete the campaign from the server
-    const response = await axios.delete("http://localhost:3001/deleteCampaign", {
+    const response = await axios.post("http://localhost:3001/deleteCampaign", {
       campaign_Id: CampaignId, // Sending the campaign ID in the request body
     });
 

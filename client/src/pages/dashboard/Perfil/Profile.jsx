@@ -1,5 +1,5 @@
 import CameraAltIcon from "@mui/icons-material/CameraAlt";
-import { Avatar, Button, Grid, MenuItem, Typography } from "@mui/material";
+import { Avatar, Button, FormControl, Grid, InputLabel, MenuItem, Select, Typography } from "@mui/material";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -15,8 +15,12 @@ import {
   FileInput,
   FormField,
   StyledContainer,
-  StyledForm
+  StyledForm,
 } from "./StyledComponets/ProfileStyled";
+
+import countriesData from './../../../assets/json/countries.json';
+import statesData from './../../../assets/json/states.json';
+import citiesData from './../../../assets/json/cities.json';
 
 const FormProfile = () => {
   // State to manage form data
@@ -29,14 +33,22 @@ const FormProfile = () => {
     gender: "",
     phone_number: "",
     address: "",
-    city: "",
-    state: "",
     country: "",
+    state: "",
+    city: "",
     profile_picture_url: "",
     occupation: "",
     education_level: "",
     marital_status: "",
     program: "",
+  });
+
+  const [formList, setFormList] = useState({
+    gender: [],
+    occupation: [],
+    marital_status: [],
+    education_level: [],
+    program: [],
   });
 
   const dispatch = useDispatch();
@@ -49,45 +61,77 @@ const FormProfile = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  const [filteredStates, setFilteredStates] = useState([]);
+  const [filteredCities, setFilteredCities] = useState([]);
   // Fetch user information on component mount
+
   useEffect(() => {
-
-    console.log(user)
+    console.log(user);
     axios
-      .post("http://localhost:3001/fetchUserInf", { user_id : user.id })
+      .post("http://localhost:3001/fetchUserInf", { user_id: user.id })
       .then((response) => {
-
-        console.log(response)
+        console.log(response);
         if (response.data.success) {
-          const userData = response.data.user[0]
-          // Format date of birth to 'YYYY-MM-DD'
+          const userData = response.data.user;
+          const occupationsData = response.data.occupations;
+          const maritalStatus = response.data.maritalStatus;
+          const genderOptions = response.data.genders;
+          const educationLevels = response.data.educationLevels;
+          const programs = response.data.programs;
+  
+          console.log(userData);
+  
           const formattedDate = userData.date_of_birth
             ? new Date(userData.date_of_birth).toISOString().split("T")[0]
             : "";
-            console.log(userData.person_id)
-            
-
-          // Update formData with user information
+  
+          // Verificar que location no sea null antes de acceder a sus propiedades
+          const location = userData.location || {};
+          
+          // Filtrar los estados y ciudades iniciales basados en country y state del usuario
+          const initialFilteredStates = location.country
+            ? statesData.states.filter(
+                (state) => state.id_country === parseInt(location.country)
+              )
+            : []; // Si no existe country, retornar un array vacío
+  
+          const initialFilteredCities = location.state
+            ? citiesData.cities.filter(
+                (city) => city.id_state === parseInt(location.state)
+              )
+            : []; // Si no existe state, retornar un array vacío
+  
+          setFormList({
+            gender: genderOptions,
+            occupation: occupationsData,
+            marital_status: maritalStatus,
+            education_level: educationLevels,
+            program: programs,
+          });
+  
+          setFilteredStates(initialFilteredStates);
+          setFilteredCities(initialFilteredCities);
+  
+          // Actualiza el estado de formData con la información del usuario, usando el operador opcional
           setFormData({
             person_id: userData.person_id || "",
             national_id_number: userData.national_id_number || "",
             first_name: userData.first_name || "",
             last_name: userData.last_name || "",
             date_of_birth: formattedDate,
-            gender: userData.gender || "",
+            gender: userData.gender_id || "",
             phone_number: userData.phone_number || "",
             address: userData.address || "",
-            city: userData.city || "",
-            state: userData.state || "",
-            country: userData.country || "",
+            country: location.country || "",
+            state: location.state || "",
+            city: location.city || "",
             profile_picture_url: userData.profile_picture_url || "",
-            occupation: userData.occupation || "",
-            education_level: userData.education_level || "",
-            marital_status: userData.marital_status || "",
-            program: userData.program || "",
+            occupation: userData.occupation_id || "",
+            education_level: userData.education_level_id || "",
+            marital_status: userData.marital_status_id || "",
+            program: userData.program_id || "",
           });
-          
-          // Set profile picture URL
+  
           setProfilePicture(`http://localhost:3001${userData.profile_picture_url}`);
           setLoading(false);
         } else {
@@ -99,13 +143,39 @@ const FormProfile = () => {
         setLoading(false);
       });
   }, [user]);
+  
 
   // Handle input changes for the form fields
-  const handleChange = (e) => {
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: value, // Guarda el ID seleccionado en `formData.gender`
     });
+
+      // Actualiza selectores dependientes
+  if (name === 'country') {
+    setFilteredStates(statesData.states.filter(state => state.id_country === parseInt(value)));
+    
+    setFormData({
+      ...formData,
+      [name]: value, // Guarda el ID seleccionado en `formData.gender`
+    });
+
+    setFilteredCities([]); // Limpia ciudades
+  } else if (name === 'state') {
+    setFilteredCities(citiesData.cities.filter(city => city.id_state === parseInt(value)));
+   
+    setFormData({
+      ...formData,
+      [name]: value, // Guarda el ID seleccionado en `formData.gender`
+    });
+
+  }
+
+
+    
   };
 
   // Handle file input changes for profile picture
@@ -121,14 +191,23 @@ const FormProfile = () => {
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
+    // Validación de formulario
+    const missingFields = validateForm();
+    if (missingFields.length > 0) {
+      Swal.fire({
+        icon: "error",
+        title: "Faltan campos por rellenar",
+        text: `Por favor complete los siguientes campos: ${missingFields.join(", ")}`,
+      });
+      return;
+    }
+  
     if (selectedFile) {
       try {
-        // Create a FormData object to send the image to the server
         const imageData = new FormData();
         imageData.append("file", selectedFile);
-
-        // Make request to upload the image
+  
         const uploadResponse = await axios.post(
           `http://localhost:3001/upload/${user.id}/profile`,
           imageData,
@@ -138,16 +217,14 @@ const FormProfile = () => {
             },
           }
         );
-
+  
         if (uploadResponse.data.success) {
-          // Update profile_picture_url with the received URL
           const imageUrl = uploadResponse.data.imageUrl;
           setFormData({
             ...formData,
             profile_picture_url: imageUrl,
           });
-
-          // Dispatch action to update user profile
+  
           dispatch(UpdateUser({ ...formData, profile_picture_url: imageUrl }));
         } else {
           console.error("Error uploading image:", uploadResponse.data.message);
@@ -156,7 +233,6 @@ const FormProfile = () => {
         console.error("Error uploading image:", error);
       }
     } else {
-      // If no image is selected, submit the form directly
       dispatch(UpdateUser(formData));
     }
   };
@@ -174,11 +250,11 @@ const FormProfile = () => {
         didOpen: (toast) => {
           toast.onmouseenter = Swal.stopTimer;
           toast.onmouseleave = Swal.resumeTimer;
-        }
+        },
       });
       Toast.fire({
         icon: "success",
-        title: "Changes saved successfully"
+        title: "Changes saved successfully",
       });
 
       setTimeout(() => {
@@ -191,7 +267,6 @@ const FormProfile = () => {
           dispatch(resetState());
         }
       }, 1000); // Wait for 1 second
-
     } else if (error != null) {
       // Show error notification
       const Toast = Swal.mixin({
@@ -203,14 +278,43 @@ const FormProfile = () => {
         didOpen: (toast) => {
           toast.onmouseenter = Swal.stopTimer;
           toast.onmouseleave = Swal.resumeTimer;
-        }
+        },
       });
       Toast.fire({
         icon: "error",
-        title: "Something went wrong"
+        title: "Something went wrong",
       });
     }
   }, [error, success]);
+
+
+
+
+  // Función de validación de campos obligatorios
+const validateForm = () => {
+  const requiredFields = [
+    { field: "national_id_number", name: "Número de Identificación Nacional" },
+    { field: "first_name", name: "Nombre" },
+    { field: "last_name", name: "Apellidos" },
+    { field: "date_of_birth", name: "Fecha de Nacimiento" },
+    { field: "gender", name: "Género" },
+    { field: "phone_number", name: "Número Telefónico" },
+    { field: "address", name: "Dirección" },
+    { field: "country", name: "País" },
+    { field: "state", name: "Departamento" },
+    { field: "city", name: "Ciudad" },
+    { field: "occupation", name: "Ocupación" },
+    { field: "education_level", name: "Semestre Actual" },
+    { field: "marital_status", name: "Estado Civil" },
+    { field: "program", name: "Programa Actual" },
+  ];
+
+  const missingFields = requiredFields
+    .filter((field) => !formData[field.field])
+    .map((field) => field.name);
+
+  return missingFields;
+};
 
   return (
     <ThemeProvider>
@@ -287,20 +391,27 @@ const FormProfile = () => {
                 InputLabelProps={{ shrink: true }}
               />
             </Grid>
+
             <Grid item xs={12} sm={6}>
               <FormField
                 fullWidth
                 select
                 name="gender"
-                label="Genero"
-                value={formData.gender}
+                label="Género"
+                value={formData.gender} // Contiene el ID del género seleccionado
                 onChange={handleChange}
               >
-                <MenuItem value="Male">Maculino</MenuItem>
-                <MenuItem value="Female">Femenino</MenuItem>
-                <MenuItem value="Other">Otro</MenuItem>
+                {formList.gender.map((genderOption) => (
+                  <MenuItem
+                    key={genderOption.gender_id}
+                    value={genderOption.gender_id}
+                  >
+                    {genderOption.gender}
+                  </MenuItem>
+                ))}
               </FormField>
             </Grid>
+
             <Grid item xs={12} sm={6}>
               <FormField
                 fullWidth
@@ -320,74 +431,146 @@ const FormProfile = () => {
                 onChange={handleChange}
               />
             </Grid>
+
             <Grid item xs={12} sm={6}>
               <FormField
                 fullWidth
-                name="city"
-                label="Ciudad"
-                value={formData.city}
-                onChange={handleChange}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormField
-                fullWidth
-                name="state"
-                label="Departamento"
-                value={formData.state}
-                onChange={handleChange}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormField
-                fullWidth
-                name="country"
-                label="Pais"
-                value={formData.country}
-                onChange={handleChange}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormField
-                fullWidth
+                select
                 name="occupation"
                 label="Ocupación"
                 value={formData.occupation}
                 onChange={handleChange}
-              />
+              >
+                {formList.occupation.map((occupationOption) => (
+                  <MenuItem
+                    key={occupationOption.occupation_id}
+                    value={occupationOption.occupation_id}
+                  >
+                    {occupationOption.occupation_name}
+                  </MenuItem>
+                ))}
+              </FormField>
             </Grid>
+
             <Grid item xs={12} sm={6}>
               <FormField
                 fullWidth
+                select
                 name="education_level"
                 label="Semestre actual"
                 value={formData.education_level}
                 onChange={handleChange}
-              />
+              >
+                {formList.education_level.map((educationOption) => (
+                  <MenuItem
+                    key={educationOption.education_level_id}
+                    value={educationOption.education_level_id}
+                  >
+                    {educationOption.level}
+                  </MenuItem>
+                ))}
+              </FormField>
             </Grid>
+
             <Grid item xs={12} sm={6}>
               <FormField
                 fullWidth
                 select
                 name="marital_status"
-                label="Estado civil "
+                label="Estado Civil"
                 value={formData.marital_status}
                 onChange={handleChange}
               >
-                <MenuItem value="Single">Soltero</MenuItem>
-                <MenuItem value="Married">Casado</MenuItem>
-                <MenuItem value="Divorced">Divorcidado</MenuItem>
+                {formList.marital_status.map((statusOption) => (
+                  <MenuItem
+                    key={statusOption.marital_status_id}
+                    value={statusOption.marital_status_id}
+                  >
+                    {statusOption.status_name}
+                  </MenuItem>
+                ))}
               </FormField>
             </Grid>
+
             <Grid item xs={12} sm={6}>
               <FormField
                 fullWidth
+                select
                 name="program"
                 label="Programa actual"
                 value={formData.program}
                 onChange={handleChange}
-              />
+              >
+                {formList.program.map((programOption) => (
+                  <MenuItem
+                    key={programOption.program_id}
+                    value={programOption.program_id}
+                  >
+                    {programOption.program}
+                  </MenuItem>
+                ))}
+              </FormField>
             </Grid>
+
+           
+            <Grid item xs={12} sm={6}>
+  <FormField
+    fullWidth
+    select
+    name="country"
+    label="País"
+    value={formData.country}
+    onChange={handleChange}
+  >
+    {countriesData.countries.map(country => (
+      <MenuItem key={country.id} value={country.id}>
+        {country.name}
+      </MenuItem>
+    ))}
+  </FormField>
+</Grid>
+
+{/* State Selector */}
+<Grid item xs={12} sm={6}>
+  <FormField
+    fullWidth
+    select
+    name="state"
+    label="Departamento"
+    value={formData.state}
+    onChange={handleChange}
+    disabled={!formData.country}  // Deshabilitado hasta que se seleccione un país
+  >
+    {filteredStates.map(state => (
+      <MenuItem key={state.id} value={state.id}>
+        {state.name}
+      </MenuItem>
+    ))}
+  </FormField>
+</Grid>
+
+{/* City Selector */}
+<Grid item xs={12} sm={6}>
+  <FormField
+    fullWidth
+    select
+    name="city"
+    label="Ciudad"
+    value={formData.city}
+    onChange={handleChange}
+    disabled={!formData.state}  // Deshabilitado hasta que se seleccione un estado
+  >
+    {filteredCities.map(city => (
+      <MenuItem key={city.id} value={city.id}>
+        {city.name}
+      </MenuItem>
+    ))}
+  </FormField>
+</Grid>
+          
+          
+           
+
           </Grid>
 
           <Button type="submit" variant="contained" color="primary">
@@ -396,13 +579,9 @@ const FormProfile = () => {
         </StyledForm>
       </StyledContainer>
 
-
-      
       <Footer />
     </ThemeProvider>
   );
 };
 
 export default FormProfile;
-
-

@@ -19,7 +19,7 @@ import { RegisterCandidate, resetState } from "../../../redux/states/RegisterCan
 const BeCandidate = () => {
     // State to manage form data for candidate registration
     const [formData, setFormData] = useState({
-        person_id: "", // ID of the person registering
+        user_id: "", // ID of the person registering
         political_party: "", // Political party of the candidate
         campaign_slogan: "", // Slogan for the campaign
         biography: "", // Biography of the candidate
@@ -63,7 +63,7 @@ const BeCandidate = () => {
         if (user) {
             setFormData((prevData) => ({
                 ...prevData,
-                person_id: user.id // Attach the user's ID
+                user_id: user.id // Attach the user's ID
             }));
         }
     }, [user]); // Runs whenever the user state changes

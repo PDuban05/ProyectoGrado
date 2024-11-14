@@ -53,6 +53,7 @@ export const RegisterCandidate = (userData) => async (dispatch) => {
       userData // userData is sent in the request body
     );
     
+    
     // Check if the response indicates success
     if (response.data.success) {
       dispatch(RegisterSuccess()); // Dispatch success action if registration is successful
